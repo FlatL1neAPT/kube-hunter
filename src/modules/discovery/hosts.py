@@ -76,8 +76,14 @@ class FromPodHostDiscovery(Hunter):
     def execute(self):
         # Discover master API server from in-pod environment variable.
         if len(config.remote) > 0:
+            if self.is_azure_pod():
+                cloud="Azure"
+            else:
+                external_ip = requests.get("http://canhazip.com").text # getting external ip, to determine if cloud cluster
+                cloud = HostDiscoveryHelpers.get_cloud(external_ip)                
+
             for host in config.remote:
-                self.publish_event(NewHostEvent(host=host, cloud=HostDiscoveryHelpers.get_cloud(host)))
+                self.publish_event(NewHostEvent(host=host, cloud=cloud))
         else:
             if self.is_azure_pod():
                 subnets, cloud =self.azure_metadata_discovery()
